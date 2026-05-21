@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>DotInfraKit.Queue</PackageId>
+    <Description>Background job queue for ASP.NET Core — named queues, retry policies, dead-letter queue, and multi-driver support.</Description>
+    <Tags>dotinfrakit queue background-jobs aspnetcore retry dead-letter</Tags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+</Project>

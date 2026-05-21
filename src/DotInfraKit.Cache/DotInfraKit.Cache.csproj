@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>DotInfraKit.Cache</PackageId>
+    <Description>Caching for ASP.NET Core — Cache-Aside pattern, prefix invalidation, and Redis Cluster support.</Description>
+    <Tags>dotinfrakit cache redis aspnetcore cache-aside distributed-cache</Tags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
+  </ItemGroup>
+
+</Project>

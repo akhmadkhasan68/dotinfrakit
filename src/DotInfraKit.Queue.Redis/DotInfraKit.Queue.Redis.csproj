@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>DotInfraKit.Queue.Redis</PackageId>
+    <Description>Redis driver for DotInfraKit.Queue — single node, Sentinel, and Cluster support.</Description>
+    <Tags>dotinfrakit queue redis background-jobs aspnetcore</Tags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DotInfraKit.Queue\DotInfraKit.Queue.csproj" />
+    <PackageReference Include="StackExchange.Redis" />
+  </ItemGroup>
+
+</Project>

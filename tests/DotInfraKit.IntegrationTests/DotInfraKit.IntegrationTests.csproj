@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DotInfraKit.Scheduler\DotInfraKit.Scheduler.csproj" />
+    <ProjectReference Include="..\..\src\DotInfraKit.Queue\DotInfraKit.Queue.csproj" />
+    <ProjectReference Include="..\..\src\DotInfraKit.Queue.Redis\DotInfraKit.Queue.Redis.csproj" />
+    <ProjectReference Include="..\..\src\DotInfraKit.Queue.Database\DotInfraKit.Queue.Database.csproj" />
+    <ProjectReference Include="..\..\src\DotInfraKit.Cache\DotInfraKit.Cache.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Testcontainers.Redis" />
+    <PackageReference Include="Testcontainers.MsSql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>DotInfraKit.Queue.Database</PackageId>
+    <Description>EF Core database driver for DotInfraKit.Queue — durable, auditable job queue backed by your application database.</Description>
+    <Tags>dotinfrakit queue database efcore background-jobs aspnetcore</Tags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DotInfraKit.Queue\DotInfraKit.Queue.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+
+</Project>

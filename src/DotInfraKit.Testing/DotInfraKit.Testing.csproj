@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>DotInfraKit.Testing</PackageId>
+    <Description>Test helpers for DotInfraKit — FakeQueueService, FakeCacheService, and plain assertion helpers.</Description>
+    <Tags>dotinfrakit testing fakes aspnetcore</Tags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DotInfraKit.Queue\DotInfraKit.Queue.csproj" />
+    <ProjectReference Include="..\DotInfraKit.Cache\DotInfraKit.Cache.csproj" />
+  </ItemGroup>
+
+</Project>

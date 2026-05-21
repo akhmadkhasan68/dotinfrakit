@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>DotInfraKit</PackageId>
+    <Description>Meta-package for DotInfraKit — batteries-included infrastructure toolkit for ASP.NET Core: scheduler, job queue, and caching.</Description>
+    <Tags>dotinfrakit scheduler queue cache aspnetcore background-jobs redis</Tags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DotInfraKit.Scheduler\DotInfraKit.Scheduler.csproj" />
+    <ProjectReference Include="..\DotInfraKit.Queue\DotInfraKit.Queue.csproj" />
+    <ProjectReference Include="..\DotInfraKit.Queue.Redis\DotInfraKit.Queue.Redis.csproj" />
+    <ProjectReference Include="..\DotInfraKit.Queue.Database\DotInfraKit.Queue.Database.csproj" />
+    <ProjectReference Include="..\DotInfraKit.Cache\DotInfraKit.Cache.csproj" />
+  </ItemGroup>
+
+</Project>

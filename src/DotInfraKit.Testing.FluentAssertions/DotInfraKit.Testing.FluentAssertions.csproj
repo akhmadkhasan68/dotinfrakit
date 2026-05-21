@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>DotInfraKit.Testing.FluentAssertions</PackageId>
+    <Description>FluentAssertions extensions for DotInfraKit.Testing — fluent syntax for asserting enqueued jobs and cache behavior.</Description>
+    <Tags>dotinfrakit testing fluentassertions aspnetcore</Tags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DotInfraKit.Testing\DotInfraKit.Testing.csproj" />
+    <PackageReference Include="FluentAssertions" />
+  </ItemGroup>
+
+</Project>
