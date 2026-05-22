@@ -398,30 +398,30 @@
 
 ---
 
-## Phase 10: Integration Tests
+## Phase 10: Integration Tests ✅
 
-- [ ] Add Testcontainers.Redis, Testcontainers.MsSql, Microsoft.AspNetCore.Mvc.Testing
-- [ ] Create `docker-compose.test.yml` for 3-node Redis Cluster (CI)
-- [ ] Mark Redis Cluster tests with `[Trait("Category", "RedisCluster")]`
+- [x] Add Testcontainers.Redis, Testcontainers.MsSql, Microsoft.EntityFrameworkCore.Sqlite
+- [x] Create `docker-compose.test.yml` for 3-node Redis Cluster (CI)
+- [x] Mark Redis Cluster tests with `[Trait("Category", "RedisCluster")]`
 
 ### Redis Queue
 
-- [ ] `EnqueueAsync` → job picked up and executed by worker (TaskCompletionSource pattern)
-- [ ] Failing job retried and moved to DLQ after `maxAttempts`
+- [x] `EnqueueAsync` → job picked up and executed by worker (TaskCompletionSource pattern)
+- [x] Failing job retried and moved to DLQ after `maxAttempts`
 
 ### Database Queue
 
-- [ ] Job persists across app restart (enqueue → stop → restart → processed)
-- [ ] Two instances sharing same DB process same job exactly once (no duplicate execution)
+- [x] Job persists across app restart (enqueue → stop → restart → processed)
+- [x] Two instances sharing same DB process same job exactly once (no duplicate execution)
 
 ### Redis Cluster Cache
 
-- [ ] `ForgetByPrefixAsync` evicts keys from all cluster nodes
-- [ ] Keys hashing to different nodes all cleared
+- [x] `ForgetByPrefixAsync` evicts keys from all cluster nodes
+- [x] Keys hashing to different nodes all cleared
 
 ### Scheduler Cluster Mode
 
-- [ ] Two instances with shared DB store: job fires exactly once (no duplicate execution)
+- [x] Two instances with shared DB store: job fires exactly once (no duplicate execution)
 
 ---
 
