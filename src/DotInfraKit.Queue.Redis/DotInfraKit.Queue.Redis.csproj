@@ -9,6 +9,8 @@
   <ItemGroup>
     <ProjectReference Include="..\DotInfraKit.Queue\DotInfraKit.Queue.csproj" />
     <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
 </Project>

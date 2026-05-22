@@ -11,7 +11,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\DotInfraKit.Cache\DotInfraKit.Cache.csproj" />
+    <ProjectReference Include="..\..\src\DotInfraKit.Testing\DotInfraKit.Testing.csproj" />
+    <ProjectReference Include="..\..\src\DotInfraKit.Testing.FluentAssertions\DotInfraKit.Testing.FluentAssertions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,7 +21,6 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="NSubstitute" />
   </ItemGroup>
 
   <ItemGroup>

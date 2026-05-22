@@ -19,9 +19,18 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Testcontainers.Redis" />
     <PackageReference Include="Testcontainers.MsSql" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Scheduler\quartz-sqlserver.sql">
+      <LogicalName>DotInfraKit.IntegrationTests.QuartzSqlServer</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

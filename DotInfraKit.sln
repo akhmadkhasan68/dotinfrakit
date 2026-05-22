@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotInfraKit.Cache.Tests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotInfraKit.IntegrationTests", "tests\DotInfraKit.IntegrationTests\DotInfraKit.IntegrationTests.csproj", "{A1114995-2EB6-4906-848E-5E81423F30F8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotInfraKit.Testing.Tests", "tests\DotInfraKit.Testing.Tests\DotInfraKit.Testing.Tests.csproj", "{BC7B03E2-8658-4235-A47C-F41333BFA818}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,6 +90,10 @@ Global
 		{A1114995-2EB6-4906-848E-5E81423F30F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1114995-2EB6-4906-848E-5E81423F30F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1114995-2EB6-4906-848E-5E81423F30F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC7B03E2-8658-4235-A47C-F41333BFA818}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC7B03E2-8658-4235-A47C-F41333BFA818}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC7B03E2-8658-4235-A47C-F41333BFA818}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC7B03E2-8658-4235-A47C-F41333BFA818}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{03B3F181-5EF4-4BB7-9893-25EFB98B778A} = {99FC3803-0CD9-4EDB-AF90-97682A304FC1}
@@ -102,5 +108,6 @@ Global
 		{95C6836F-0A7C-438C-8FA9-08DFE2DCB2CE} = {DD4A1557-C02C-4250-81B8-D7E9C9D9F79E}
 		{DB55A6A3-382E-47B0-A9C4-7B0AC13DA2F8} = {DD4A1557-C02C-4250-81B8-D7E9C9D9F79E}
 		{A1114995-2EB6-4906-848E-5E81423F30F8} = {DD4A1557-C02C-4250-81B8-D7E9C9D9F79E}
+		{BC7B03E2-8658-4235-A47C-F41333BFA818} = {DD4A1557-C02C-4250-81B8-D7E9C9D9F79E}
 	EndGlobalSection
 EndGlobal

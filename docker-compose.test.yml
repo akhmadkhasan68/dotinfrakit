@@ -1,0 +1,24 @@
+version: '3.8'
+
+# Redis Cluster for integration tests.
+# Usage:
+#   docker-compose -f docker-compose.test.yml up -d
+#   REDIS_CLUSTER_ENDPOINTS=localhost:7001,localhost:7002,localhost:7003 \
+#     dotnet test tests/DotInfraKit.IntegrationTests/ --filter "Category=RedisCluster"
+#   docker-compose -f docker-compose.test.yml down
+
+services:
+  redis-cluster:
+    image: bitnami/redis-cluster:7.2
+    ports:
+      - "7001:7001"
+      - "7002:7002"
+      - "7003:7003"
+    environment:
+      - REDIS_PORT_NUMBER=7001
+      - REDIS_CLUSTER_ENABLED=yes
+      - REDIS_NODES=localhost:7001 localhost:7002 localhost:7003
+      - REDIS_CLUSTER_NODE_TIMEOUT=5000
+      - REDIS_CLUSTER_ANNOUNCE_HOSTNAME=localhost
+      - REDIS_CLUSTER_REPLICAS=0
+      - ALLOW_EMPTY_PASSWORD=yes

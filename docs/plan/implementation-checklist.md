@@ -84,223 +84,317 @@
 
 ---
 
-## Phase 3: DotInfraKit.Queue (Core)
+## Phase 3: DotInfraKit.Queue (Core) ✅
 
 ### Interfaces & Models
 
-- [ ] Define `IQueueJob<TPayload>` interface (`Task ExecuteAsync(TPayload, JobContext, CancellationToken)`)
-- [ ] Define `IQueueService` interface with two `EnqueueAsync<TJob, TPayload>` overloads returning `Task<Guid>`
-- [ ] Define `IDlqService` interface (`GetDeadJobsAsync`, `RetryAsync`, `RetryAllAsync`, `DeleteAsync`, `DeleteAllAsync`)
-- [ ] Define `JobContext` record/class (`JobId`, `QueueName`, `AttemptNumber`, `MaxAttempts`, `EnqueuedAt`)
-- [ ] Define `EnqueueOptions` class (`Priority`, `Delay`, `RunAt`)
-- [ ] Define `BackoffType` enum (`Exponential`, `Fixed`, `Linear`)
-- [ ] Define `DlqJobRecord` POCO (`Id`, `QueueName`, `JobType`, `Payload`, `Attempts`, `ErrorMessage`, `CreatedAt`, `DeadAt`)
+- [x] Define `IQueueJob<TPayload>` interface (`Task ExecuteAsync(TPayload, JobContext, CancellationToken)`)
+- [x] Define `IQueueService` interface with two `EnqueueAsync<TJob, TPayload>` overloads returning `Task<Guid>`
+- [x] Define `IDlqService` interface (`GetDeadJobsAsync`, `RetryAsync`, `RetryAllAsync`, `DeleteAsync`, `DeleteAllAsync`)
+- [x] Define `JobContext` record/class (`JobId`, `QueueName`, `AttemptNumber`, `MaxAttempts`, `EnqueuedAt`)
+- [x] Define `EnqueueOptions` class (`Priority`, `Delay`, `RunAt`)
+- [x] Define `BackoffType` enum (`Exponential`, `Fixed`, `Linear`)
+- [x] Define `DlqJobRecord` POCO (`Id`, `QueueName`, `JobType`, `Payload`, `Attempts`, `ErrorMessage`, `CreatedAt`, `DeadAt`)
 
 ### Retry Policy
 
-- [ ] Implement `RetryPolicy` with `CalculateDelay(attempt)`:
+- [x] Implement `RetryPolicy` with `CalculateDelay(attempt)`:
   - `Exponential`: `2^(attempt-1) × initialDelayMs`
   - `Fixed`: `initialDelayMs` always
   - `Linear`: `attempt × initialDelayMs`
 
 ### Memory Driver
 
-- [ ] Implement `MemoryQueueDriver` using `System.Threading.Channels`
-- [ ] Cap `Workers(count)` at 1 for Memory driver; log warning if `count > 1`
-- [ ] Track delayed jobs in in-memory sorted list by `RunAt`; move to channel when ready
+- [x] Implement `MemoryQueueDriver` using `System.Threading.Channels`
+- [x] Track delayed jobs in in-memory sorted list by `RunAt`; move to channel when ready
 
 ### Worker Service
 
-- [ ] Implement `QueueWorkerService : IHostedService`
-- [ ] Use `SemaphoreSlim(concurrency)` for parallel job execution
-- [ ] Worker loop: dequeue → acquire semaphore → `Task.Run(ProcessNextJobAsync)` → release semaphore
-- [ ] Support multiple worker instances (`count`) per queue
-- [ ] Resolve job type via `Type.GetType(jobRecord.JobType)` + `IServiceScopeFactory.CreateScope()`
-- [ ] Throw `InvalidOperationException` with clear message if job type not found in DI
+- [x] Implement `QueueWorkerService : BackgroundService`
+- [x] Use `SemaphoreSlim(concurrency)` for parallel job execution
+- [x] Worker loop: dequeue → acquire semaphore → `Task.Run(ProcessNextJobAsync)` → release semaphore
+- [x] Support multiple worker instances (`count`) per queue
+- [x] Resolve job type via `Type.GetType(jobRecord.JobType)` + `IServiceScopeFactory.CreateScope()`
+- [x] Log `InvalidOperationException` with clear message if job type not found; discard + continue
 
 ### Stuck Job Sweeper
 
-- [ ] Implement `StuckJobSweeperService : IHostedService`
-- [ ] Default `LockTimeout`: 5 minutes; polling interval: `LockTimeout / 2`
-- [ ] On timeout: increment `attempts`, clear `locked_at`/`locked_by`
-- [ ] If `attempts >= max_attempts` after reset → move to DLQ (or delete if DLQ not enabled)
-- [ ] Log `Warning` when job permanently deleted (no DLQ)
+- [x] Implement `StuckJobSweeperService : BackgroundService`
+- [x] Default `LockTimeout`: 5 minutes; polling interval: `LockTimeout / 2`
+- [x] On timeout: increment `attempts`, clear `locked_at`/`locked_by`
+- [x] If `attempts >= max_attempts` after reset → move to DLQ (or discard if DLQ not enabled)
+- [x] Log `Warning` when job permanently discarded (no DLQ)
 
 ### Delayed Job Sweeper
 
-- [ ] Implement `DelayedJobSweeperService : IHostedService`
-- [ ] Default polling interval: 5 seconds
-- [ ] Query `next_run_at <= UtcNow AND status = 'pending'` → move to ready pool
+- [x] Implement `DelayedJobSweeperService : BackgroundService`
+- [x] Default polling interval: 5 seconds
+- [x] Query `next_run_at <= UtcNow AND status = 'pending'` → move to ready pool
 
 ### Dead-Letter Queue
 
-- [ ] Implement `InMemoryDlqService` using `ConcurrentDictionary`
-- [ ] Register `IDlqService` only when `EnableDeadLetterQueue()` is called
+- [x] Implement `InMemoryDlqService` using `ConcurrentDictionary`
+- [x] Register `IDlqService` only when `EnableDeadLetterQueue()` is called
 
 ### DI Registration
 
-- [ ] Implement `AddJobQueue(IServiceCollection, Action<QueueOptions>)` extension in `DotInfraKit` namespace
-- [ ] Implement `UseDefaultQueue(Action<QueueBuilder>)` and `AddQueue(name, Action<QueueBuilder>)` on `QueueOptions`
-- [ ] Implement `QueueBuilder` methods: `UseMemoryDriver`, `Workers(count, concurrency)`, `Retry(maxAttempts, BackoffType, initialDelayMs)`, `EnableDeadLetterQueue()`, `LockTimeout(TimeSpan)`, `DelayedJobPollingInterval(TimeSpan)`
-- [ ] Log one-time startup warning when `Priority > 0` used with Memory or Redis driver
+- [x] Implement `AddJobQueue(IServiceCollection, Action<QueueOptions>)` extension in `DotInfraKit` namespace
+- [x] Implement `UseDefaultQueue(Action<QueueBuilder>)` and `AddQueue(name, Action<QueueBuilder>)` on `QueueOptions`
+- [x] Implement `QueueBuilder` methods: `UseMemoryDriver`, `Workers(count, concurrency)`, `Retry(maxAttempts, BackoffType, initialDelayMs)`, `EnableDeadLetterQueue()`, `LockTimeout(TimeSpan)`, `DelayedJobPollingInterval(TimeSpan)`
+- [x] Log one-time startup warning when `Priority > 0` used with Memory driver
+
+### Unit Tests (20 passing)
+
+- [x] `RetryPolicyTests` — all BackoffType × attempt combinations
+- [x] `MemoryQueueDriverTests` — enqueue/dequeue/complete/fail/stuck/delayed/DLQ flows
+- [x] `QueueWorkerServiceTests` — execute called, exception → fail, exception → DLQ, unresolvable type handled
 
 ---
 
-## Phase 4: DotInfraKit.Queue.Redis
+## Phase 4: DotInfraKit.Queue.Redis ✅
 
 ### Redis Connection
 
-- [ ] Implement `UseRedis(Action<RedisOptions>)` on `QueueBuilder` (single node)
-- [ ] Implement `UseRedisSentinel(Action<RedisSentinelOptions>)` on `QueueBuilder`
-- [ ] Implement `UseRedisCluster(Action<RedisClusterOptions>)` on `QueueBuilder`
-- [ ] Support `KeyPrefix` on all Redis option types; queue keys follow `{KeyPrefix}queue:{queueName}`
+- [x] Implement `UseRedis(Action<RedisOptions>)` on `QueueBuilder` via extension method (single node)
+- [x] Implement `UseRedisSentinel(Action<RedisSentinelOptions>)` on `QueueBuilder` via extension method
+- [x] Implement `UseRedisCluster(Action<RedisClusterOptions>)` on `QueueBuilder` via extension method
+- [x] Support `KeyPrefix` on all Redis option types; queue keys follow `{KeyPrefix}queue:{queueName}`
 
 ### Redis Driver
 
-- [ ] Implement `RedisQueueDriver` backed by Redis `LIST` (RPUSH enqueue, BLPOP dequeue)
-- [ ] Store job payload in `{KeyPrefix}payload:{jobId}` (Redis String)
-- [ ] Store metadata in `{KeyPrefix}meta:{queueName}:{jobId}` (Redis Hash: `locked_at`, `locked_by`, `attempts`, `status`)
-- [ ] Implement optimistic locking: `UPDATE ... WHERE locked_at IS NULL` equivalent via Redis Hash conditional set
-- [ ] `locked_by` format: `{machineId}:{workerId}`
+- [x] Implement `RedisQueueDriver` backed by Redis `LIST` (RPUSH enqueue, LPOP poll-dequeue)
+- [x] Store job payload in `{KeyPrefix}job:{jobId:N}` (Redis String, JSON QueueJobEntry)
+- [x] Track processing in `{KeyPrefix}processing:{name}` (Sorted Set, score = LockedAt epoch)
+- [x] Track delayed in `{KeyPrefix}delayed:{name}` (Sorted Set, score = NextRunAt epoch)
+- [x] `locked_by` format: worker ID string passed from `QueueWorkerService`
 
 ### Redis DLQ
 
-- [ ] Implement `RedisDlqService`
-- [ ] Dead jobs stored in `{KeyPrefix}dlq:{queueName}` Redis Hash (`{jobId}` → JSON `DlqJobRecord`)
-- [ ] Implement all `IDlqService` operations against Redis Hash
+- [x] Implement `RedisDlqService`
+- [x] Dead jobs stored in `{KeyPrefix}dlq:{queueName}` Redis Hash (`{jobId:N}` → JSON `DlqJobRecord`)
+- [x] Implement all `IDlqService` operations against Redis Hash
 
 ### Stuck Job Sweeper (Redis)
 
-- [ ] Scan `{KeyPrefix}meta:{queueName}:*` keys, read `locked_at` from each Hash
-- [ ] On timeout: increment `attempts`, clear `locked_at`/`locked_by`, re-push payload to LIST or move to DLQ
+- [x] Use `ZRANGEBYSCORE {prefix}processing:{name} 0 {epoch}` to find stuck jobs efficiently
+- [x] On timeout: increment `attempts`, clear `locked_at`/`locked_by`, re-push to queue LIST or move to DLQ
+
+### Architecture
+
+- [x] `InternalsVisibleTo("DotInfraKit.Queue.Redis")` on core package — lets Redis package access internal driver interface
+- [x] `QueueDriverRegistration` factory pattern — driver + DLQ service created together, memory and Redis both use same `AddJobQueue()` path
+
+### Integration Tests (requires Docker / OrbStack)
+
+- [x] `RedisQueueDriverTests` — 9 tests covering all `IQueueDriver` methods via Testcontainers.Redis
 
 ---
 
-## Phase 5: DotInfraKit.Queue.Database
+## Phase 5: DotInfraKit.Queue.Database ✅
 
 ### Entity & Migration
 
-- [ ] Define `QueueJobRecord` entity with all columns: `Id`, `QueueName`, `JobType`, `Payload`, `Status`, `Attempts`, `MaxAttempts`, `NextRunAt`, `LockedAt`, `LockedBy`, `ErrorMessage`, `CreatedAt`, `CompletedAt`
-- [ ] Implement `AddDotInfraKitQueue(ModelBuilder)` extension: snake_case column names, default values, dequeue index
-- [ ] Status values: `pending | processing | completed | failed | dead`
+- [x] Define `QueueJobRecord` entity with all columns: `Id`, `QueueName`, `JobType`, `Payload`, `Status`, `Attempts`, `MaxAttempts`, `NextRunAt`, `LockedAt`, `LockedBy`, `ErrorMessage`, `CreatedAt`, `CompletedAt`
+- [x] Implement `AddDotInfraKitQueue(ModelBuilder)` extension: snake_case column names, default values, dequeue index
+- [x] Status values: `pending | processing | completed | failed | dead`
 
 ### Database Driver
 
-- [ ] Implement `DatabaseQueueDriver` using EF Core + optimistic locking (`WHERE locked_at IS NULL` → 1 row affected)
-- [ ] Dequeue query: `ORDER BY priority DESC, next_run_at ASC` (priority only honored here)
-- [ ] Implement `UseDatabaseDriver(Action<DatabaseDriverOptions>)` on `QueueBuilder`
-- [ ] Support `UseDbContext<TContext>()` on `DatabaseDriverOptions`
+- [x] Implement `DatabaseQueueDriver<TContext>` using EF Core + optimistic locking (`WHERE locked_at IS NULL` → 1 row affected)
+- [x] Dequeue query: `ORDER BY priority DESC, next_run_at ASC` (priority only honored here)
+- [x] Implement `UseDatabaseDriver<TContext>(Action<DatabaseDriverOptions>?)` on `QueueBuilder` via extension method
+- [x] `IDbContextFactory<TContext>` resolved from DI; driver registered via provider-based factory pattern
 
 ### AutoMigrate
 
-- [ ] Implement `AutoMigrate(bool allowInProduction = false)` on `DatabaseDriverOptions`
-- [ ] Check `IWebHostEnvironment.IsProduction()` at startup; throw `InvalidOperationException` if production and `allowInProduction` is false
+- [x] Implement `AutoMigrate(bool allowInProduction = false)` on `DatabaseDriverOptions`
+- [x] Check `IHostEnvironment.IsProduction()` at startup; throw `InvalidOperationException` if production and `allowInProduction` is false
 
 ### Database DLQ
 
-- [ ] Implement `DatabaseDlqService` querying `QueueJobRecord` where `status = 'dead'`
-- [ ] `RetryAsync`: reset `status = 'pending'`, `attempts = 0`, clear `locked_at`/`locked_by`
+- [x] Implement `DatabaseDlqService<TContext>` querying `QueueJobRecord` where `status = 'dead'`
+- [x] `RetryAsync`: reset `status = 'pending'`, `attempts = 0`, clear `locked_at`/`locked_by`
+
+### Architecture
+
+- [x] `InternalsVisibleTo("DotInfraKit.Queue.Database")` on core package
+- [x] `QueueDriverRegistration` extended with `CreateDriverFromProvider` / `CreateDlqServiceFromProvider` for DI-based driver creation
+- [x] `QueueServiceExtensions` refactored to use keyed services (`AddKeyedSingleton<IQueueDriver>`)
+- [x] `QueueBuilder._startupRegistrations` for AutoMigrate hosted service registration
+
+### Integration Tests (SQLite, no Docker)
+
+- [x] `DatabaseQueueDriverTests` — 10 tests covering all `IQueueDriver` methods + optimistic lock concurrency
 
 ---
 
-## Phase 6: DotInfraKit.Cache
+## Phase 6: DotInfraKit.Cache ✅
 
 ### Interface
 
-- [ ] Define `ICacheService` interface: `GetOrSetAsync<T>`, `GetAsync<T>`, `SetAsync<T>`, `ForgetAsync`, `ForgetByPrefixAsync`, `ExistsAsync`
+- [x] Define `ICacheService` interface: `GetOrSetAsync<T>`, `GetAsync<T>`, `SetAsync<T>`, `ForgetAsync`, `ForgetByPrefixAsync`, `ExistsAsync`
 
 ### Memory Driver
 
-- [ ] Implement `MemoryCacheDriver` wrapping `IMemoryCache`
-- [ ] Maintain `ConcurrentDictionary<string, byte>` key registry alongside cache
-- [ ] `SetAsync` → insert key into registry
-- [ ] `ForgetAsync` → remove from registry + cache
-- [ ] `ForgetByPrefixAsync` → prefix-scan registry (O(n)), delete matching keys from both registry and cache
+- [x] Implement `MemoryCacheDriver` wrapping `IMemoryCache`
+- [x] Maintain `ConcurrentDictionary<string, byte>` key registry alongside cache
+- [x] `SetAsync` → insert key into registry
+- [x] `ForgetAsync` → remove from registry + cache
+- [x] `ForgetByPrefixAsync` → prefix-scan registry (O(n)), delete matching keys from both registry and cache
 
 ### Redis Driver (Single Node)
 
-- [ ] Implement `RedisCacheDriver` using `StackExchange.Redis`
-- [ ] Support `KeyPrefix`, `PoolSize`
-- [ ] `ForgetByPrefixAsync` → `SCAN` on single node + batch `DEL`
+- [x] Implement `RedisCacheDriver` using `StackExchange.Redis`
+- [x] Support `KeyPrefix`, `Password`, `Database`
+- [x] `ForgetByPrefixAsync` → `SCAN` on single node + batch `DEL`
 
 ### Redis Sentinel Driver
 
-- [ ] Implement `RedisSentinelCacheDriver`
-- [ ] Support `ServiceName`, `Endpoints[]`, `Password`, `KeyPrefix`
-- [ ] `ForgetByPrefixAsync` → `SCAN` primary node + batch `DEL`
+- [x] `CacheRedisSentinelOptions` with `ServiceName`, `Endpoints[]`, `Password`, `Database`, `KeyPrefix`
+- [x] `CacheBuilder.UseRedisSentinel()` builds sentinel mux → master mux → same `RedisCacheDriver`
+- [x] `ForgetByPrefixAsync` → `SCAN` primary node + batch `DEL` (same `RedisCacheDriver`)
 
 ### Redis Cluster Driver
 
-- [ ] Implement `RedisClusterCacheDriver`
-- [ ] `ForgetByPrefixAsync` → scan **all master nodes** in parallel (`Parallel.ForEachAsync`); collect matched keys → batch `DEL`
+- [x] Implement `RedisClusterCacheDriver` (composition over `RedisCacheDriver`)
+- [x] `ForgetByPrefixAsync` → scan **all master nodes** in parallel (`Parallel.ForEachAsync`); collect matched keys → batch `DEL`
 
 ### Auto-Invalidation Middleware
 
-- [ ] Implement `CacheAutoInvalidationMiddleware`
-- [ ] On HTTP `POST`, `PUT`, `PATCH`, `DELETE` → call `ForgetByPrefixAsync(prefix)` after response
-- [ ] Register via `EnableAutoInvalidation(prefix)` on cache builder
+- [x] `CacheAutoInvalidationConfig` internal singleton holds prefix
+- [x] `UseAppCache()` on `IApplicationBuilder` wires `Use()` lambda: POST/PUT/PATCH/DELETE → `ForgetByPrefixAsync(prefix)` after response
+- [x] Register via `EnableAutoInvalidation(prefix)` on `CacheBuilder`
 
 ### DI Registration
 
-- [ ] Implement `AddAppCache(IServiceCollection, Action<CacheBuilder>)` extension in `DotInfraKit` namespace
-- [ ] Implement `CacheBuilder` methods: `UseMemory()`, `UseRedis(Action<RedisOptions>)`, `UseRedisSentinel(Action<RedisSentinelOptions>)`, `UseRedisCluster(Action<RedisClusterOptions>)`, `DefaultExpiry(TimeSpan)`, `EnableAutoInvalidation(prefix)`
-- [ ] Read config from `DotInfraKit:Cache` section
+- [x] `AddAppCache(IServiceCollection, Action<CacheBuilder>)` extension in `DotInfraKit` namespace
+- [x] `CacheBuilder` fluent methods: `UseMemory()`, `UseRedis()`, `UseRedisSentinel()`, `UseRedisCluster()`, `WithDefaultExpiry(TimeSpan)`, `EnableAutoInvalidation(prefix)`
+- [x] `UseMemory()` auto-calls `services.AddMemoryCache()` via `_isMemory` flag
+
+### Architecture Decisions
+
+- [x] Single `RedisCacheDriver` handles both single-node and Sentinel (same `IConnectionMultiplexer` API)
+- [x] `RedisClusterCacheDriver` uses composition (not inheritance) — delegates all ops to inner `RedisCacheDriver`, overrides only `ForgetByPrefixAsync`
+- [x] `AssemblyInfo.cs` with `InternalsVisibleTo("DotInfraKit.Cache.Tests")`
+
+### Unit Tests (MemoryCacheDriverTests — 6 tests, no Docker)
+
+- [x] `GetOrSetAsync_CallsFactoryOnMiss`
+- [x] `GetOrSetAsync_SkipsFactoryOnHit`
+- [x] `ForgetAsync_RemovesKey`
+- [x] `ForgetByPrefixAsync_RemovesMatchingKeysOnly`
+- [x] `ExistsAsync_ReturnsTrueForCachedKey`
+- [x] `DefaultExpiry_AppliedWhenNoExpiryPassed`
 
 ---
 
-## Phase 7: DotInfraKit.Testing
+## Phase 7: DotInfraKit.Testing ✅
 
-- [ ] Implement `FakeQueueService : IQueueService`
-  - Records enqueued jobs in-memory, does NOT execute them
-  - `AssertEnqueued<TJob>()`
-  - `AssertEnqueued<TJob, TPayload>(Func<TPayload, bool> predicate)`
-  - `AssertNotEnqueued<TJob>()`
-  - `AssertEnqueuedCount<TJob>(int expected)`
-- [ ] Implement `FakeCacheService : ICacheService`
-  - In-memory cache with spy capabilities
+- [x] Implement `FakeQueueService : IQueueService`
+  - Records enqueued jobs in-memory via `object?` payload storage, does NOT execute them
+  - `AssertEnqueued<TJob>()` — throws `InvalidOperationException` if none found
+  - `AssertEnqueued<TJob, TPayload>(Func<TPayload, bool> predicate)` — cast + predicate match
+  - `AssertNotEnqueued<TJob>()` — throws if any found
+  - `AssertEnqueuedCount<TJob>(int expected)` — exact count assertion
+- [x] Implement `FakeCacheService : ICacheService`
+  - In-memory `Dictionary<string, object?>` store (no expiry — not needed in tests)
   - `GetCallCount(key)` — times `GetAsync` / `GetOrSetAsync` called for key
   - `FactoryCallCount(key)` — times factory was actually invoked (cache miss count)
 
+### Architecture Decisions
+
+- [x] No InternalsVisibleTo needed — fakes only implement public interfaces
+- [x] No thread-safety (plain `List<T>`, `Dictionary`) — tests are single-threaded
+- [x] Assertion methods throw `InvalidOperationException` — no test framework dependency
+
+### Unit Tests (`DotInfraKit.Testing.Tests` — 13 tests)
+
+**FakeQueueServiceTests (7)**
+- [x] `EnqueueAsync_RecordsJob_AssertEnqueuedPasses`
+- [x] `AssertEnqueued_ThrowsWhenJobNotEnqueued`
+- [x] `AssertEnqueued_WithPredicate_MatchesPayload`
+- [x] `AssertEnqueued_WithPredicate_ThrowsWhenNoMatch`
+- [x] `AssertNotEnqueued_PassesWhenNothingEnqueued`
+- [x] `AssertNotEnqueued_ThrowsWhenJobEnqueued`
+- [x] `AssertEnqueuedCount_MatchesExactCount`
+
+**FakeCacheServiceTests (6)**
+- [x] `SetAsync_ThenGetAsync_ReturnsValue`
+- [x] `ForgetAsync_RemovesKey`
+- [x] `ForgetByPrefixAsync_RemovesMatchingKeysOnly`
+- [x] `GetOrSetAsync_IncrementsCounts`
+- [x] `GetAsync_IncrementsGetCallCount`
+- [x] `ExistsAsync_ReturnsTrueOnlyForStoredKey`
+
 ---
 
-## Phase 8: DotInfraKit.Testing.FluentAssertions
+## Phase 8: DotInfraKit.Testing.FluentAssertions ✅
 
-- [ ] Add `FluentAssertions` NuGet dependency (not in base Testing package)
-- [ ] Implement `FakeQueueServiceAssertions` with fluent syntax:
-  - `fakeQueue.Should().HaveEnqueued<TJob>()`
-  - `.WithPayload<TPayload>(Func<TPayload, bool> predicate)`
-- [ ] Implement `FakeCacheServiceAssertions` with fluent syntax
+- [x] `FluentAssertions` NuGet dependency already in project csproj (not in base Testing package)
+- [x] Implement `FakeQueueServiceAssertions` with fluent syntax:
+  - `fakeQueue.Should().HaveEnqueued<TJob>()` → `HaveEnqueuedChain<TJob>` (carries TJob type)
+  - `.WithPayload<TPayload>(Func<TPayload, bool> predicate)` → `AndConstraint<FakeQueueServiceAssertions>`
+  - `.NotHaveEnqueued<TJob>()` → `AndConstraint<FakeQueueServiceAssertions>`
+  - `.HaveEnqueuedCount<TJob>(int)` → `AndConstraint<FakeQueueServiceAssertions>`
+- [x] Implement `FakeCacheServiceAssertions` with fluent syntax:
+  - `.HaveKey(string)` / `.NotHaveKey(string)`
+  - `.HaveGetCallCount(string key, int expected)`
+  - `.HaveFactoryCallCount(string key, int expected)`
+
+### Architecture Decisions
+
+- [x] `HaveEnqueuedChain<TJob>` extends `AndConstraint<FakeQueueServiceAssertions>` — carries TJob for `WithPayload`
+- [x] `TryAssert(Action)` wraps public `Assert*` methods — converts `InvalidOperationException` to `false` for `ForCondition`
+- [x] FA failures via `Execute.Assertion.BecauseOf(...).ForCondition(...).FailWith(...)` — standard FA7 pattern
+- [x] Tests in `DotInfraKit.Testing.Tests` (added ProjectReference to FluentAssertions project)
+
+### Tests (11 new, in DotInfraKit.Testing.Tests)
+
+**FakeQueueServiceAssertionsTests (6)**
+- [x] `HaveEnqueued_PassesWhenJobEnqueued`
+- [x] `HaveEnqueued_FailsWhenJobNotEnqueued`
+- [x] `HaveEnqueued_WithPayload_PassesWhenMatches`
+- [x] `HaveEnqueued_WithPayload_FailsWhenNoMatch`
+- [x] `NotHaveEnqueued_PassesWhenEmpty`
+- [x] `NotHaveEnqueued_FailsWhenEnqueued`
+
+**FakeCacheServiceAssertionsTests (5)**
+- [x] `HaveKey_PassesWhenKeyExists`
+- [x] `HaveKey_FailsWhenKeyAbsent`
+- [x] `NotHaveKey_PassesAfterForget`
+- [x] `HaveGetCallCount_MatchesActualCount`
+- [x] `HaveFactoryCallCount_MatchesActualCount`
 
 ---
 
-## Phase 9: Unit Tests
+## Phase 9: Unit Tests ✅
 
 ### DotInfraKit.Scheduler.Tests
 
-- [ ] Add xUnit, FluentAssertions, NSubstitute, Microsoft.Extensions.Logging.Abstractions
-- [ ] Test `ScheduleBuilder.ToCronExpression()` for all schedule methods (Theory/InlineData)
-- [ ] Test each `IScheduledJob` implementation in isolation (no Quartz.NET required)
-- [ ] Test `WithCronFromConfig` throws on missing key
-- [ ] Test `IScheduledJobExceptionHandler` is invoked on job failure
+- [x] Add xUnit, FluentAssertions, NSubstitute, Microsoft.Extensions.Logging.Abstractions
+- [x] Test `ScheduleBuilder.ToCronExpression()` for all schedule methods (Theory/InlineData)
+- [x] Test each `IScheduledJob` implementation in isolation (no Quartz.NET required)
+- [x] Test `WithCronFromConfig` throws on missing key
+- [x] Test `IScheduledJobExceptionHandler` is invoked on job failure
 
 ### DotInfraKit.Queue.Tests
 
-- [ ] Add xUnit, FluentAssertions, NSubstitute, EFCore.InMemory
-- [ ] Test job `ExecuteAsync` called with correct payload
-- [ ] Test exception propagation from job
-- [ ] Test `RetryPolicy.CalculateDelay` for all `BackoffType` values (Theory/InlineData)
-- [ ] Test Memory driver: enqueue → dequeue order (FIFO)
-- [ ] Test `Workers(count > 1)` logs warning with Memory driver
-- [ ] Test `Priority > 0` with Memory/Redis driver logs warning
+- [x] Add xUnit, FluentAssertions, NSubstitute, EFCore.InMemory
+- [x] Test job `ExecuteAsync` called with correct payload
+- [x] Test exception propagation from job
+- [x] Test `RetryPolicy.CalculateDelay` for all `BackoffType` values (Theory/InlineData)
+- [x] Test Memory driver: enqueue → dequeue order (FIFO)
+- [x] Test `Workers(count > 1)` logs warning with Memory driver — `QueueWorkerService` gains optional `totalWorkerCount` param; warns if `> 1` and driver is `MemoryQueueDriver`
+- [x] Test `Priority > 0` with Memory/Redis driver logs warning — warning already in `QueueService.EnqueueAsync`; `QueueServiceTests` added
 
 ### DotInfraKit.Cache.Tests
 
-- [ ] Add xUnit, FluentAssertions
-- [ ] Test `GetOrSetAsync` calls factory on miss, skips on hit
-- [ ] Test `ForgetAsync` removes key
-- [ ] Test `ForgetByPrefixAsync` removes only matching keys (Memory driver)
-- [ ] Test `ExistsAsync` returns correct bool
-- [ ] Test `DefaultExpiry` applied when no expiry passed
+- [x] Add xUnit, FluentAssertions
+- [x] Test `GetOrSetAsync` calls factory on miss, skips on hit
+- [x] Test `ForgetAsync` removes key
+- [x] Test `ForgetByPrefixAsync` removes only matching keys (Memory driver)
+- [x] Test `ExistsAsync` returns correct bool
+- [x] Test `DefaultExpiry` applied when no expiry passed
 
 ---
 
@@ -331,7 +425,15 @@
 
 ---
 
-## Phase 11: CI/CD & Packaging
+## Phase 11: Documentation
+
+- [ ] Create `README.md` with overview, features, getting started, example usage for each module on each .NET version
+- [ ] Create `CHANGELOG.md` with initial version entry
+- [ ] Create `LICENSE` file with MIT license text
+
+---
+
+## Phase 12: CI/CD & Packaging
 
 ### GitHub Actions
 
