@@ -83,6 +83,12 @@ public static class QueueServiceExtensions
         }
 
         var capturedQueueConfigs = queueConfigs;
+
+        var registry = new QueueRegistry(capturedQueueConfigs.Select(kvp => (kvp.Key, kvp.Value)));
+        services.AddSingleton(registry);
+        services.AddSingleton<IQueueMonitorService>(sp =>
+            new QueueMonitorService(sp, sp.GetRequiredService<QueueRegistry>()));
+
         services.AddSingleton<IQueueService>(sp =>
         {
             var driverMap = capturedQueueConfigs.ToDictionary(
