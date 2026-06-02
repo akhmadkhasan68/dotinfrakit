@@ -83,6 +83,7 @@ internal sealed class DatabaseQueueDriver<TContext> : IQueueDriver
             .Where(j => j.Id == jobId)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(j => j.Status, "pending")
+                .SetProperty(j => j.Attempts, j => j.Attempts + 1)
                 .SetProperty(j => j.LockedAt, (DateTime?)null)
                 .SetProperty(j => j.LockedBy, (string?)null)
                 .SetProperty(j => j.NextRunAt, nextRunAt)

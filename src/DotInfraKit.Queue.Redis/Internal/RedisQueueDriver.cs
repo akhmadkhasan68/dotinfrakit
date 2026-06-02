@@ -85,6 +85,7 @@ internal sealed class RedisQueueDriver : IQueueDriver
         if (json.IsNull) return;
 
         var entry = JsonSerializer.Deserialize<QueueJobEntry>((string)json!)!;
+        entry.Attempts++;
         entry.Status = "failed";
         entry.ErrorMessage = error;
         entry.LockedAt = null;
