@@ -9,5 +9,6 @@
     <RepositoryUrl>https://github.com/dotinfrakit/dotinfrakit</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 </Project>

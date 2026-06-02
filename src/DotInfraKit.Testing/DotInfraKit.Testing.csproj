@@ -2,13 +2,33 @@
 
   <PropertyGroup>
     <PackageId>DotInfraKit.Testing</PackageId>
+    <IsPackable>true</IsPackable>
     <Description>Test helpers for DotInfraKit — FakeQueueService, FakeCacheService, and plain assertion helpers.</Description>
     <Tags>dotinfrakit testing fakes aspnetcore</Tags>
   </PropertyGroup>
 
+  <!-- ProjectReferences for compile-time resolution; PrivateAssets="all" suppresses NuGet dep entries in nuspec -->
   <ItemGroup>
-    <ProjectReference Include="..\DotInfraKit.Queue\DotInfraKit.Queue.csproj" />
-    <ProjectReference Include="..\DotInfraKit.Cache\DotInfraKit.Cache.csproj" />
+    <ProjectReference Include="..\DotInfraKit.Queue\DotInfraKit.Queue.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\DotInfraKit.Cache\DotInfraKit.Cache.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Bundle Queue and Cache DLLs into this package (they have no standalone NuGet package) -->
+  <ItemGroup>
+    <None Include="..\DotInfraKit.Queue\bin\$(Configuration)\$(TargetFramework)\DotInfraKit.Queue.dll"
+          Pack="true" PackagePath="lib/$(TargetFramework)/" />
+    <None Include="..\DotInfraKit.Cache\bin\$(Configuration)\$(TargetFramework)\DotInfraKit.Cache.dll"
+          Pack="true" PackagePath="lib/$(TargetFramework)/" />
+  </ItemGroup>
+
+  <!-- Runtime deps from bundled Queue and Cache sub-projects -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
   </ItemGroup>
 
 </Project>

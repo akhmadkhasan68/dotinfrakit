@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <PackageId>DotInfraKit.Testing.FluentAssertions</PackageId>
+    <IsPackable>true</IsPackable>
     <Description>FluentAssertions extensions for DotInfraKit.Testing — fluent syntax for asserting enqueued jobs and cache behavior.</Description>
     <Tags>dotinfrakit testing fluentassertions aspnetcore</Tags>
   </PropertyGroup>

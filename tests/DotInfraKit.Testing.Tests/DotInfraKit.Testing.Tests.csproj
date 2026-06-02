@@ -13,6 +13,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\DotInfraKit.Testing\DotInfraKit.Testing.csproj" />
     <ProjectReference Include="..\..\src\DotInfraKit.Testing.FluentAssertions\DotInfraKit.Testing.FluentAssertions.csproj" />
+    <!-- Queue and Cache are bundled into DotInfraKit.Testing.nupkg but PrivateAssets="all" hides them from ProjectReference consumers -->
+    <ProjectReference Include="..\..\src\DotInfraKit.Queue\DotInfraKit.Queue.csproj" />
+    <ProjectReference Include="..\..\src\DotInfraKit.Cache\DotInfraKit.Cache.csproj" />
   </ItemGroup>
 
   <ItemGroup>
