@@ -133,6 +133,22 @@ public sealed class RedisQueueDriverTests : IAsyncLifetime
     }
 
     [DockerAvailableFact]
+    public async Task Fail_IncrementsAttemptsInRedis()
+    {
+        var driver = CreateDriver();
+        var entry = MakeEntry();
+
+        await driver.EnqueueAsync(entry);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await driver.DequeueAsync("worker-1", cts.Token);
+        await driver.FailAsync(entry.Id, "transient error", DateTime.UtcNow.AddMinutes(1));
+
+        var json = await _mux!.GetDatabase().StringGetAsync($"test:job:{entry.Id:N}");
+        var stored = System.Text.Json.JsonSerializer.Deserialize<DotInfraKit.Queue.Internal.QueueJobEntry>((string)json!)!;
+        stored.Attempts.Should().Be(1);
+    }
+
+    [DockerAvailableFact]
     public async Task MoveToDeadLetter_StoresInDlqHash()
     {
         var driver = CreateDriver();

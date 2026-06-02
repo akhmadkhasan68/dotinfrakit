@@ -105,6 +105,22 @@ public sealed class DatabaseQueueDriverTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Fail_IncrementsAttemptsInDatabase()
+    {
+        var driver = CreateDriver();
+        var entry = MakeEntry();
+
+        await driver.EnqueueAsync(entry);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await driver.DequeueAsync("worker-1", cts.Token);
+        await driver.FailAsync(entry.Id, "transient error", DateTime.UtcNow.AddMinutes(1));
+
+        await using var ctx = _factory!.CreateDbContext();
+        var record = await ctx.Set<QueueJobRecord>().FindAsync(entry.Id);
+        record!.Attempts.Should().Be(1);
+    }
+
+    [Fact]
     public async Task MoveToDeadLetter_SetsStatusDead()
     {
         var driver = CreateDriver();
