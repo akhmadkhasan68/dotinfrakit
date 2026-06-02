@@ -2,16 +2,54 @@
 
   <PropertyGroup>
     <PackageId>DotInfraKit</PackageId>
-    <Description>Meta-package for DotInfraKit — batteries-included infrastructure toolkit for ASP.NET Core: scheduler, job queue, and caching.</Description>
-    <Tags>dotinfrakit scheduler queue cache aspnetcore background-jobs redis</Tags>
+    <IsPackable>true</IsPackable>
+    <Description>Meta-package for DotInfraKit — batteries-included infrastructure toolkit for ASP.NET Core: scheduler, job queue, queue monitoring, and caching.</Description>
+    <Tags>dotinfrakit scheduler queue cache monitoring aspnetcore background-jobs redis</Tags>
   </PropertyGroup>
 
+  <!-- ProjectReferences build sub-projects in order; PrivateAssets="all" suppresses NuGet dep entries in nuspec -->
   <ItemGroup>
-    <ProjectReference Include="..\DotInfraKit.Scheduler\DotInfraKit.Scheduler.csproj" />
-    <ProjectReference Include="..\DotInfraKit.Queue\DotInfraKit.Queue.csproj" />
-    <ProjectReference Include="..\DotInfraKit.Queue.Redis\DotInfraKit.Queue.Redis.csproj" />
-    <ProjectReference Include="..\DotInfraKit.Queue.Database\DotInfraKit.Queue.Database.csproj" />
-    <ProjectReference Include="..\DotInfraKit.Cache\DotInfraKit.Cache.csproj" />
+    <ProjectReference Include="..\DotInfraKit.Scheduler\DotInfraKit.Scheduler.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\DotInfraKit.Queue\DotInfraKit.Queue.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\DotInfraKit.Queue.Redis\DotInfraKit.Queue.Redis.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\DotInfraKit.Queue.Database\DotInfraKit.Queue.Database.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\DotInfraKit.Cache\DotInfraKit.Cache.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\DotInfraKit.Queue.Monitoring\DotInfraKit.Queue.Monitoring.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Explicitly bundle sub-project DLLs into lib/$(TargetFramework)/ of this package -->
+  <ItemGroup>
+    <None Include="..\DotInfraKit.Queue\bin\$(Configuration)\$(TargetFramework)\DotInfraKit.Queue.dll"
+          Pack="true" PackagePath="lib/$(TargetFramework)/" />
+    <None Include="..\DotInfraKit.Cache\bin\$(Configuration)\$(TargetFramework)\DotInfraKit.Cache.dll"
+          Pack="true" PackagePath="lib/$(TargetFramework)/" />
+    <None Include="..\DotInfraKit.Scheduler\bin\$(Configuration)\$(TargetFramework)\DotInfraKit.Scheduler.dll"
+          Pack="true" PackagePath="lib/$(TargetFramework)/" />
+    <None Include="..\DotInfraKit.Queue.Redis\bin\$(Configuration)\$(TargetFramework)\DotInfraKit.Queue.Redis.dll"
+          Pack="true" PackagePath="lib/$(TargetFramework)/" />
+    <None Include="..\DotInfraKit.Queue.Database\bin\$(Configuration)\$(TargetFramework)\DotInfraKit.Queue.Database.dll"
+          Pack="true" PackagePath="lib/$(TargetFramework)/" />
+    <None Include="..\DotInfraKit.Queue.Monitoring\bin\$(Configuration)\$(TargetFramework)\DotInfraKit.Queue.Monitoring.dll"
+          Pack="true" PackagePath="lib/$(TargetFramework)/" />
+  </ItemGroup>
+
+  <!-- Runtime deps from all bundled sub-projects; PrivateAssets="all" suppresses automatic propagation -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Quartz" />
+    <PackageReference Include="Quartz.Extensions.DependencyInjection" />
+    <PackageReference Include="Quartz.Extensions.Hosting" />
+    <PackageReference Include="Quartz.Serialization.Json" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
   </ItemGroup>
 
 </Project>
