@@ -15,6 +15,7 @@ internal sealed class RedisQueueDriver : IQueueDriver
     private string QueueKey => $"{_prefix}queue:{_queueName}";
     private string DelayedKey => $"{_prefix}delayed:{_queueName}";
     private string ProcessingKey => $"{_prefix}processing:{_queueName}";
+    private string DlqKey => $"{_prefix}dlq:{_queueName}";
     private string JobKey(Guid id) => $"{_prefix}job:{id:N}";
 
     public RedisQueueDriver(IDatabase db, string keyPrefix, string queueName)
@@ -115,13 +116,13 @@ internal sealed class RedisQueueDriver : IQueueDriver
             JobType = entry.JobType,
             Payload = entry.Payload,
             Attempts = entry.Attempts,
+            MaxAttempts = entry.MaxAttempts,
             ErrorMessage = error,
             CreatedAt = entry.CreatedAt,
             DeadAt = DateTime.UtcNow
         };
 
-        var dlqKey = $"{_prefix}dlq:{_queueName}";
-        await _db.HashSetAsync(dlqKey, jobId.ToString("N"), JsonSerializer.Serialize(record));
+        await _db.HashSetAsync(DlqKey, jobId.ToString("N"), JsonSerializer.Serialize(record));
         await _db.KeyDeleteAsync(JobKey(jobId));
     }
 
@@ -184,6 +185,111 @@ internal sealed class RedisQueueDriver : IQueueDriver
                 result.Add(JsonSerializer.Deserialize<QueueJobEntry>((string)json!)!);
         }
         return result;
+    }
+
+    public async Task<QueueStats> GetStatsAsync(string queueName, CancellationToken ct = default)
+    {
+        var pending    = await _db.ListLengthAsync(QueueKey);
+        var processing = await _db.SortedSetLengthAsync(ProcessingKey);
+        var delayed    = await _db.SortedSetLengthAsync(DelayedKey);
+        var dlq        = await _db.HashLengthAsync(DlqKey);
+        return new QueueStats(queueName, pending, processing, delayed, dlq);
+    }
+
+    public async Task<QueueJobEntry?> GetJobByIdAsync(Guid jobId, CancellationToken ct = default)
+    {
+        var json = await _db.StringGetAsync(JobKey(jobId));
+        if (json.HasValue)
+            return JsonSerializer.Deserialize<QueueJobEntry>((string)json!);
+
+        var dlqJson = await _db.HashGetAsync(DlqKey, jobId.ToString("N"));
+        if (!dlqJson.HasValue) return null;
+
+        var dlq = JsonSerializer.Deserialize<DlqJobRecord>((string)dlqJson!)!;
+        return new QueueJobEntry
+        {
+            Id = dlq.Id,
+            QueueName = dlq.QueueName,
+            JobType = dlq.JobType,
+            Payload = dlq.Payload,
+            Status = "dead",
+            Attempts = dlq.Attempts,
+            MaxAttempts = dlq.MaxAttempts,
+            ErrorMessage = dlq.ErrorMessage,
+            CreatedAt = dlq.CreatedAt,
+            CompletedAt = dlq.DeadAt
+        };
+    }
+
+    public async Task<(IReadOnlyList<QueueJobEntry> Items, long TotalCount)> ListJobsAsync(
+        string? status, int skip, int take, CancellationToken ct = default)
+    {
+        return status switch
+        {
+            "pending"    => await ListFromListAsync(QueueKey, skip, take),
+            "processing" => await ListFromZSetAsync(ProcessingKey, skip, take),
+            "delayed"    => await ListFromZSetAsync(DelayedKey, skip, take),
+            "dead"       => await ListDeadAsync(skip, take),
+            null         => await ListAllAsync(skip, take),
+            _            => ([], 0L)
+        };
+    }
+
+    private async Task<(IReadOnlyList<QueueJobEntry>, long)> ListFromListAsync(string key, int skip, int take)
+    {
+        var total = await _db.ListLengthAsync(key);
+        if (total == 0) return ([], 0L);
+        var members = await _db.ListRangeAsync(key, skip, skip + take - 1);
+        var items = await LoadEntries(members);
+        return (items, total);
+    }
+
+    private async Task<(IReadOnlyList<QueueJobEntry>, long)> ListFromZSetAsync(string key, int skip, int take)
+    {
+        var total = await _db.SortedSetLengthAsync(key);
+        if (total == 0) return ([], 0L);
+        var members = await _db.SortedSetRangeByRankAsync(key, skip, skip + take - 1);
+        var items = await LoadEntries(members);
+        return (items, total);
+    }
+
+    private async Task<(IReadOnlyList<QueueJobEntry>, long)> ListDeadAsync(int skip, int take)
+    {
+        var total = await _db.HashLengthAsync(DlqKey);
+        if (total == 0) return ([], 0L);
+        var all = await _db.HashGetAllAsync(DlqKey);
+        var entries = all
+            .Select(e => JsonSerializer.Deserialize<DlqJobRecord>((string)e.Value!)!)
+            .Select(r => new QueueJobEntry
+            {
+                Id = r.Id,
+                QueueName = r.QueueName,
+                JobType = r.JobType,
+                Payload = r.Payload,
+                Status = "dead",
+                Attempts = r.Attempts,
+                MaxAttempts = r.MaxAttempts,
+                ErrorMessage = r.ErrorMessage,
+                CreatedAt = r.CreatedAt
+            })
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip(skip).Take(take)
+            .ToList();
+        return (entries, total);
+    }
+
+    private async Task<(IReadOnlyList<QueueJobEntry>, long)> ListAllAsync(int skip, int take)
+    {
+        var (pending,    _) = await ListFromListAsync(QueueKey, 0, int.MaxValue);
+        var (processing, _) = await ListFromZSetAsync(ProcessingKey, 0, int.MaxValue);
+        var (delayed,    _) = await ListFromZSetAsync(DelayedKey, 0, int.MaxValue);
+        var (dead,       _) = await ListDeadAsync(0, int.MaxValue);
+
+        var all = pending.Concat(processing).Concat(delayed).Concat(dead)
+            .OrderByDescending(e => e.CreatedAt)
+            .ToList();
+        var total = all.Count;
+        return (all.Skip(skip).Take(take).ToList(), total);
     }
 
     private static double ToEpoch(DateTime dt) =>

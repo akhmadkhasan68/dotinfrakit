@@ -151,6 +151,47 @@ internal sealed class DatabaseQueueDriver<TContext> : IQueueDriver
                 .SetProperty(j => j.NextRunAt, (DateTime?)null), ct);
     }
 
+    public async Task<QueueStats> GetStatsAsync(string queueName, CancellationToken ct = default)
+    {
+        await using var ctx = await _factory.CreateDbContextAsync(ct);
+        var now = DateTime.UtcNow;
+        var pending    = await ctx.Set<QueueJobRecord>().LongCountAsync(j =>
+            j.QueueName == _queueName && j.Status == "pending"
+            && (j.NextRunAt == null || j.NextRunAt <= now), ct);
+        var processing = await ctx.Set<QueueJobRecord>().LongCountAsync(j =>
+            j.QueueName == _queueName && j.Status == "processing", ct);
+        var delayed    = await ctx.Set<QueueJobRecord>().LongCountAsync(j =>
+            j.QueueName == _queueName && j.Status == "pending"
+            && j.NextRunAt != null && j.NextRunAt > now, ct);
+        var dlq        = await ctx.Set<QueueJobRecord>().LongCountAsync(j =>
+            j.QueueName == _queueName && j.Status == "dead", ct);
+        return new QueueStats(queueName, pending, processing, delayed, dlq);
+    }
+
+    public async Task<QueueJobEntry?> GetJobByIdAsync(Guid jobId, CancellationToken ct = default)
+    {
+        await using var ctx = await _factory.CreateDbContextAsync(ct);
+        var record = await ctx.Set<QueueJobRecord>()
+            .FirstOrDefaultAsync(j => j.Id == jobId && j.QueueName == _queueName, ct);
+        return record is null ? null : ToEntry(record);
+    }
+
+    public async Task<(IReadOnlyList<QueueJobEntry> Items, long TotalCount)> ListJobsAsync(
+        string? status, int skip, int take, CancellationToken ct = default)
+    {
+        await using var ctx = await _factory.CreateDbContextAsync(ct);
+        var query = ctx.Set<QueueJobRecord>().Where(j => j.QueueName == _queueName);
+        if (status is not null)
+            query = query.Where(j => j.Status == status);
+
+        var total = await query.LongCountAsync(ct);
+        var items = await query
+            .OrderByDescending(j => j.CreatedAt)
+            .Skip(skip).Take(take)
+            .ToListAsync(ct);
+        return (items.Select(ToEntry).ToList(), total);
+    }
+
     private static QueueJobEntry ToEntry(QueueJobRecord r) => new()
     {
         Id = r.Id,

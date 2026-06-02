@@ -11,4 +11,8 @@ internal interface IQueueDriver
     Task RequeueStuckJobAsync(Guid jobId, CancellationToken ct = default);
     Task<IReadOnlyList<QueueJobEntry>> GetReadyDelayedJobsAsync(CancellationToken ct = default);
     Task PromoteDelayedJobAsync(Guid jobId, CancellationToken ct = default);
+    Task<QueueStats> GetStatsAsync(string queueName, CancellationToken ct = default);
+    Task<QueueJobEntry?> GetJobByIdAsync(Guid jobId, CancellationToken ct = default);
+    Task<(IReadOnlyList<QueueJobEntry> Items, long TotalCount)> ListJobsAsync(
+        string? status, int skip, int take, CancellationToken ct = default);
 }
