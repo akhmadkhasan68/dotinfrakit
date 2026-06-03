@@ -59,6 +59,8 @@ internal sealed class QueueWorkerService : BackgroundService
             if (entry is null)
             {
                 semaphore.Release();
+                try { await Task.Delay(_config.PollingInterval, stoppingToken); }
+                catch (OperationCanceledException) { break; }
                 continue;
             }
 

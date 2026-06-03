@@ -10,5 +10,6 @@ internal sealed class QueueConfiguration
     public bool DlqEnabled { get; init; }
     public TimeSpan LockTimeout { get; init; } = TimeSpan.FromMinutes(5);
     public TimeSpan DelayedJobPollingInterval { get; init; } = TimeSpan.FromSeconds(5);
+    public TimeSpan PollingInterval { get; init; } = TimeSpan.FromSeconds(3);
     public int ChannelCapacity { get; init; } = 100;
 }

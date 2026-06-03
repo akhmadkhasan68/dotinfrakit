@@ -15,6 +15,7 @@ public sealed class QueueBuilder
     private bool _dlqEnabled;
     private TimeSpan _lockTimeout = TimeSpan.FromMinutes(5);
     private TimeSpan _delayedJobPollingInterval = TimeSpan.FromSeconds(5);
+    private TimeSpan _pollingInterval = TimeSpan.FromSeconds(3);
     private int _channelCapacity = 100;
 
     internal QueueDriverRegistration? _driverRegistration;
@@ -70,6 +71,12 @@ public sealed class QueueBuilder
         return this;
     }
 
+    public QueueBuilder PollingInterval(TimeSpan interval)
+    {
+        _pollingInterval = interval;
+        return this;
+    }
+
     internal QueueConfiguration Build() => new()
     {
         QueueName = QueueName,
@@ -80,6 +87,7 @@ public sealed class QueueBuilder
         DlqEnabled = _dlqEnabled,
         LockTimeout = _lockTimeout,
         DelayedJobPollingInterval = _delayedJobPollingInterval,
+        PollingInterval = _pollingInterval,
         ChannelCapacity = _channelCapacity
     };
 }

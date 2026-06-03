@@ -26,43 +26,34 @@ internal sealed class DatabaseQueueDriver<TContext> : IQueueDriver
 
     public async Task<QueueJobEntry?> DequeueAsync(string workerId, CancellationToken ct = default)
     {
-        while (!ct.IsCancellationRequested)
-        {
-            var now = DateTime.UtcNow;
+        if (ct.IsCancellationRequested) return null;
 
-            await using var ctx = await _factory.CreateDbContextAsync(ct);
+        var now = DateTime.UtcNow;
+        await using var ctx = await _factory.CreateDbContextAsync(ct);
 
-            var candidate = await ctx.Set<QueueJobRecord>()
-                .Where(j => j.QueueName == _queueName
-                         && j.Status == "pending"
-                         && (j.NextRunAt == null || j.NextRunAt <= now))
-                .OrderByDescending(j => j.Priority)
-                .ThenBy(j => j.NextRunAt)
-                .FirstOrDefaultAsync(ct);
+        var candidate = await ctx.Set<QueueJobRecord>()
+            .Where(j => j.QueueName == _queueName
+                     && j.Status == "pending"
+                     && (j.NextRunAt == null || j.NextRunAt <= now))
+            .OrderByDescending(j => j.Priority)
+            .ThenBy(j => j.NextRunAt)
+            .FirstOrDefaultAsync(ct);
 
-            if (candidate is null)
-            {
-                try { await Task.Delay(100, ct); }
-                catch (OperationCanceledException) { break; }
-                continue;
-            }
+        if (candidate is null) return null;
 
-            var claimed = await ctx.Set<QueueJobRecord>()
-                .Where(j => j.Id == candidate.Id && j.LockedAt == null && j.Status == "pending")
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(j => j.Status, "processing")
-                    .SetProperty(j => j.LockedAt, now)
-                    .SetProperty(j => j.LockedBy, workerId), ct);
+        var claimed = await ctx.Set<QueueJobRecord>()
+            .Where(j => j.Id == candidate.Id && j.LockedAt == null && j.Status == "pending")
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(j => j.Status, "processing")
+                .SetProperty(j => j.LockedAt, now)
+                .SetProperty(j => j.LockedBy, workerId), ct);
 
-            if (claimed == 0) continue;
+        if (claimed == 0) return null;
 
-            candidate.Status = "processing";
-            candidate.LockedAt = now;
-            candidate.LockedBy = workerId;
-            return ToEntry(candidate);
-        }
-
-        return null;
+        candidate.Status = "processing";
+        candidate.LockedAt = now;
+        candidate.LockedBy = workerId;
+        return ToEntry(candidate);
     }
 
     public async Task CompleteAsync(Guid jobId, CancellationToken ct = default)

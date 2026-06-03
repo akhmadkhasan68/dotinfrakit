@@ -304,6 +304,37 @@ builder.Services.AddJobQueue(options =>
 
 ---
 
+### Polling interval
+
+`PollingInterval(TimeSpan)` controls how long each worker sleeps between polls when the queue is empty.
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `interval` | `3s` | Sleep duration between polls when no jobs are found |
+
+```csharp
+builder.Services.AddJobQueue(options =>
+    options.UseDefaultQueue(q =>
+    {
+        q.UseDatabaseDriver<AppDbContext>();
+        q.Workers(concurrency: 4);
+
+        // Poll every 500ms — lower latency for time-sensitive jobs
+        q.PollingInterval(TimeSpan.FromMilliseconds(500));
+
+        // Poll every 10s — fewer DB queries for low-traffic queues
+        q.PollingInterval(TimeSpan.FromSeconds(10));
+    }));
+```
+
+**When to decrease:** jobs are latency-sensitive and the 3s default is too slow to pick them up.
+
+**When to increase:** the queue is low-traffic and you want to reduce backend load. At the default 3s, one worker with 5 concurrency slots generates ~1.7 queries/second at idle; at 10s that drops to ~0.5 queries/second.
+
+> **Note:** `PollingInterval` has no effect on the in-memory driver. The memory driver blocks on a channel and wakes instantly when a job is enqueued — no polling occurs.
+
+---
+
 ### Named queues
 
 Use separate named queues to isolate workloads with different throughput or retry requirements.
@@ -390,6 +421,14 @@ builder.Services.AddJobQueue(options =>
     }));
 ```
 
+> **Database polling overhead:** Each worker polls the database once per `PollingInterval` (default 3s) when the queue is empty. With `Workers(concurrency: 5)` that is ~1.7 queries/second at idle. For low-traffic queues, increase `PollingInterval` to reduce load:
+>
+> ```csharp
+> q.UseDatabaseDriver<AppDbContext>();
+> q.Workers(concurrency: 2);
+> q.PollingInterval(TimeSpan.FromSeconds(10)); // 0.2 queries/second at idle
+> ```
+
 **B.2 — Add queue tables to your `DbContext`**
 
 ```csharp
@@ -469,7 +508,8 @@ app.MapQueueMonitoring();
       "backoffType": "Exponential",
       "dlqEnabled": true,
       "lockTimeout": "00:05:00",
-      "delayedJobPollingInterval": "00:00:05"
+      "delayedJobPollingInterval": "00:00:05",
+      "pollingInterval": "00:00:03"
     }
   ]
 }
